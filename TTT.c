@@ -13,17 +13,7 @@
 //
 // TODO:
 // 1. CREATE VsCom GAMEPLAY
-// 2. 
-// 3. 
-// 4. 
 //
-// CURRENT PROBLEMS:
-// 1. NO PROBLEMS FOUND SO FAR
-// 2. 
-//
-// FURTHER CHECKING:
-// 1. THE getSingleChar FUNCTION
-// 2.
 //
 
 #include <stdio.h>
@@ -31,14 +21,34 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 typedef struct Player
 {
-    char name[21];
+    char name[30];
     int winStatus;
     char SIGN; // could be O or X
 } player;
 
-// I manually create an input function,
+enum Boolean {false, true};
+
+enum GameConditions 
+{
+    /* exit conditions */
+    NOT_EXIT,
+    EXIT,
+
+    /* winning conditions */
+    NOT_WINNER = 0,
+    WINNER,
+
+    /* game flow */
+    KEEP_PLAY = 0,
+    GAMEOVER,
+    CANT_MOVE,
+    ILLEGAL,
+};
+
+// manually create an input function,
 // maybe it works almost the same way as
 // getchar function does
 char getSingleChar()
@@ -53,8 +63,103 @@ char getSingleChar()
     }
 }
 
-/*======================= Greeting menu starts here =========================*/
+void clrstdin(void)
+{
+    while(getchar() != '\n') 0;
+}
 
+/*======================= SOME MECHANISMS =========================*/
+
+int isLegal(char choosenOption)
+{
+    char possibleOption[12] = {
+        'e', 'E', '0', 
+        '1', '2', '3', 
+        '4', '5', '6', 
+        '7', '8', '9'
+    };
+
+    for(int i = 0; i < 12; i++)
+        if(choosenOption == possibleOption[i]) 
+            return true;
+
+    printf("There is no such option.\n");
+    getch();
+    return false;
+}
+
+void printTable(char table[3][3])
+{
+    printf("\n\n");
+
+    int m = 0;  // THE FIRST INDEX OF THE TABLE
+    int n;      //  ~  SECOND INDEX OF THE TABLE
+
+    for(int i = 1; i <= 5; i++)
+    {
+        /* even lines */
+        if(i % 2 == 0) {
+            for(int j = 0; j < 17; j++)
+            { 
+                (j == 5 || j == 11)? printf(" ") : printf("-");
+            }
+        } 
+
+        /* odd lines */
+        else {
+            n = 0;
+            for(int k = 0; k < 17; k++)
+            {
+                if(k == 2 || k == 8 || k == 14) { 
+                    printf("%c",table[m][n]);
+                    n++; 
+                }
+                else if(k == 5 || k == 11) 
+                    printf("|");
+                else
+                    printf(" ");
+            }
+            m++; // increment first index only after printing odd lines
+        }
+        printf("\n"); // breakline
+    }
+    printf("\n"); // give more space
+}
+
+void clearTable(char table[3][3])
+{
+    for(int m = 0; m < 3; m++)
+        for(int n = 0; n < 3; n++)
+            table[m][n] = ' ';
+}
+
+int isStillCanMove(char table[3][3])
+{
+    for(int m = 0; m < 3; m++)
+    {
+        for(int n = 0; n < 3; n++)
+        {
+            if(table[m][n] == ' ')
+                return true;
+        }
+    }
+
+    return false;
+}
+
+int restartGame()
+{
+    printf("Enter E/e to exit, or other keys to play again: ");
+    int x = getSingleChar();
+
+    if (x == 'E' || x == 'e')
+        return false;
+    else
+        return true;
+}
+
+
+/*======================= DISPLAY PAGES =========================*/
 void showOption()
 {
     puts("====================================");
@@ -64,93 +169,49 @@ void showOption()
     puts("2. Play vs Computer (Currently N/A)");
     puts("3. Show statistics");
     puts("4. Exit");
-}
-
-int takeChoice()
-{
-    int availableOption[] = {1, 2, 3, 4};
-
-    int optionChoosed;
     printf("\nYour choice: ");
-    scanf("%d", &optionChoosed);
-
-    for(int i = 0; i < 4; i++)
-    {
-        if(optionChoosed == availableOption[i]) {return optionChoosed;}
-    }
-
-    return 0;
 }
 
-/*======================= Game mechanisms starts here =======================*/
-
-void printTables(char table[3][3])
+void showHelpScreen()
 {
-    printf("\n\n");
+    system("cls");
+    char table[3][3] = {
+        {'1', '2', '3'},
+        {'4', '5', '6'},
+        {'7', '8', '9'},
+    };
 
-    int m = 0; // THIS IS THE FIRST INDEX OF THE TABLE
+    printTable(table);
+    
+    printf("To choose a block in the table, \n");
+    printf("press the corresponding number to the position like the table above.\n");
+    printf("You can't choose any blocks that already choosen either by player 1 or player 2.\n\n\n");
 
-    for(int i = 0; i < 5; i++)
-    {
-        if(i % 2 == 1) { // EVEN LINES GOES HERE
-            for(int j = 0; j < 17; j++)
-            { 
-                if(j == 5 || j == 11)
-                    printf(" ");
-                else
-                    printf("-");
-            }
-        } 
-
-        else {   //ODD LINES GOES HERE
-        
-            int n = 0; // THE SECOND INDEX OF THE TABLE
-            for(int k = 0; k < 17; k++)
-            {
-                if(k == 2 || k == 8 || k == 14) { 
-                    printf("%c",table[m][n]);
-                    n++; 
-                }
-                else if((k == 5) || (k == 11)) 
-                    printf("|");
-                else
-                    printf(" ");
-            }
-            m++; // INCREMENT EVERYTIME AFTER PRINTING ODD LINES
-        }
-        printf("\n"); // BREAKLINE
-    }
-    printf("\n"); // MORE SPACE
+    printf("Press ANY key to continue...\n");
+    getch();
 }
 
-void clearTables(char table[3][3])
-{
-    for(int m = 0; m < 3; m++)
-    {
-        for(int n = 0; n < 3; n++)
-        {
-            table[m][n] = ' ';
-        }
-    }
-}
 
-void initializePlayers(const char* gametype, player players[2])
+/*======================= GAME FLOW =======================*/
+
+void initPlayers(const char* gametype, player players[2])
 {
     if(gametype == "multiplayer")
     {
-        // NAME INPUT SCREEN
-        printf("\n\n");
+        /* inputting users name */
+        printf("\n");
         for(int i = 0; i < 2; i++) 
         {
-            printf("Please enter player %d name: ", i + 1);
+            printf("\nPlease enter player %d name (it can't contain any spaces): ", i + 1);
             scanf("%s", players[i].name);
-            players[i].winStatus = 0;
+            players[i].winStatus = NOT_WINNER;
+            if(i == 0) 
+                clrstdin();
         }
         printf("\n\n\n(Press ANY key to continue)\n");
         getch();
         
-
-        // CHOOSING SIGN SCREEN
+        /* choose signs each player will use */
         system("cls");
         printf("\n\n");
         printf("%s, which signs are you going to use?(O/X) ", players[0].name);
@@ -166,15 +227,14 @@ void initializePlayers(const char* gametype, player players[2])
             players[0].SIGN = 'X';
             players[1].SIGN = 'O'; 
         }
-        else { 
+        else {  // if user input illegal signs 
             system("cls");
             printf("\n\nThere is no such sign...\n");
             printf("%s, which signs are you going to use?(O/X) ", players[0].name);
             goto ask_sign_again; 
         }
         
-
-        // TELLING USER'S SIGN SCREEN
+        /* retell the used signs */
         system("cls");
         printf("\n\n");
         printf("Okay,\n\n");
@@ -184,182 +244,122 @@ void initializePlayers(const char* gametype, player players[2])
         getch();
     }
 
-
+    /* not yet created */
     else
     {
         printf("This is vs computer");
     }
 }
 
-void showHelpScreen()
-{
-    system("cls");
-    char table[3][3] = {
-        {'1', '2', '3'},
-        {'4', '5', '6'},
-        {'7', '8', '9'},
-    };
-
-    printTables(table);
-    
-    printf("To choose a block in the table, \n");
-    printf("press the corresponding number to the position like the table above.\n");
-    printf("You can't choose any blocks that already choosen either by player 1 or player 2.\n\n\n");
-
-    printf("Press ANY key to continue...\n");
-    getch();
-}
-
-int isStillCanMove(char table[3][3])
-{
-    int stillCanMove = 0;
-
-    for(int m = 0; m < 3; m++)
-    {
-        for(int n = 0; n < 3; n++)
-        {
-            if(table[m][n] == ' '){
-                stillCanMove = 1;
-                return stillCanMove;
-            }
-        }
-    }
-
-    return stillCanMove;
-}
-
-int checkIsGameover(char table[3][3])
+int isGameover(char table[3][3])
 {
     if(table[0][0] != ' ')
     {
-        if(table[0][0] == table[0][1] && table[0][0] == table[0][2])
-            return 1;
-        else if(table[0][0] == table[1][0] && table[0][0] == table[2][0]) 
-            return 1;
+        if( (table[0][0] == table[0][1] && table[0][0] == table[0][2]) ||
+            (table[0][0] == table[1][0] && table[0][0] == table[2][0]) )
+            return true;
     }
     if(table[1][1] != ' ')
     {
-        if(table[1][1] == table[1][0] && table[1][1] == table[1][2])
-            return 1;
-        else if(table[1][1] == table[0][1] && table[1][1] == table[2][1])
-            return 1;
-        else if(table[1][1] == table[0][0] && table[1][1] == table[2][2]) 
-            return 1;
-        else if(table[1][1] == table[0][2] && table[1][1] == table[2][0])
-            return 1;
+        if( (table[1][1] == table[1][0] && table[1][1] == table[1][2]) ||
+            (table[1][1] == table[0][1] && table[1][1] == table[2][1]) ||
+            (table[1][1] == table[0][0] && table[1][1] == table[2][2]) ||
+            (table[1][1] == table[0][2] && table[1][1] == table[2][0]) )
+            return true;
     }
     if(table[2][2] != ' ')
     {
-        if(table[2][2] == table[2][0] && table[2][2] == table[2][1])
-            return 1;
-        else if(table[2][2] == table[0][2] && table[2][2] == table[1][2]) 
-            return 1;
+        if( (table[2][2] == table[2][0] && table[2][2] == table[2][1]) ||
+            (table[2][2] == table[0][2] && table[2][2] == table[1][2]) )
+            return true;
     }
     
-    return 0;
+    return false;
 }
 
 int processChoosenOption(char table[3][3], char choice, player players)
 {
-    int choice_int = choice - '0';
-    choice_int = choice_int - 1;
+    int choice_int = (choice - '0') - 1;
     int firstIndex = choice_int / 3;
     int secondIndex = choice_int % 3;
 
     /* the block isn't choosen yet */
     if(table[firstIndex][secondIndex] == ' ') {
 
+        /* fill the table with user's sign */
         table[firstIndex][secondIndex] = players.SIGN;
-        if(checkIsGameover(table)) { 
-            players.winStatus = 1;
-            return 1; 
+
+        /* check some conditions */
+        if(isGameover(table)) { 
+            players.winStatus = WINNER;
+            return GAMEOVER; 
         }
-        if(!isStillCanMove(table)) {
-            return 2;
-        }
+        if(!isStillCanMove(table))
+            return CANT_MOVE;
     } 
+
     /* the block is already choose */
     else {
         printf("You can't choose that block!\n");
-        return 3;
+        return ILLEGAL;
     }
 
-    return 0;
-}
-
-int askForRestartGame()
-{
-    int x;
-    printf("Enter E/e to exit, or other keys to play again: ");
-
-    x = getSingleChar();
-    if(x == 'E' || x == 'e') 
-        return 0; 
-    else 
-        return 1;
+    return KEEP_PLAY;
 }
 
 int startMultiplayer(char table[3][3])
 {
-    system("cls"); //CLEAN THE SCREEN
+    system("cls"); // clean the screen
 
-    // CREATE and INITIALIZE PLAYERS section
+    // create and init players
     player players[2];
-    initializePlayers("multiplayer", players);
+    initPlayers("multiplayer", players);
 
     // GAMEPLAY
     int currentPlayer;
-    char choosenOption;
-    char possibleOption[12] = {'e', 'E', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'};
     int condition = 0;
+    char choosenOption;
+
     for(int i = 0; ; i++)
     {
         re_choice:
         currentPlayer = i % 2;
-        system("cls");
 
-        printTables(table);
+        /* displaying the texts */
+        system("cls");
+        printTable(table);
         printf("%s, it's your turn.\n", players[currentPlayer].name);
         printf("Enter 1-9 to mark the block in the table, or 0 for help, or e/E to exit\n");
         printf("Choose your answer: ");
         choosenOption = getSingleChar();
 
-        // FILTERING THE CHOOSEN OPTION
-        for(int i = 0; i <= 12; i++)
-        {
-            if(i == 12) {
-                printf("There is no such option.\n");
-                getch();
-                goto re_choice;
-            }
-            if(choosenOption == possibleOption[i]) { break; }
-        }
+        /* filtering the choosen option */
+        if(!isLegal(choosenOption))
+            goto re_choice;
 
         /* If the choosen option passed the filtering loop */
-        if (choosenOption != '0' && choosenOption != 'e' && choosenOption != 'E'){
-
+        if (choosenOption != '0' && choosenOption != 'e' && choosenOption != 'E')
+        {
             condition = processChoosenOption(table, choosenOption, 
                                             players[currentPlayer]);
 
             /* If the game is over */
-            if(condition == 1){ 
+            if(condition == GAMEOVER){ 
                 system("cls");
-                printTables(table);
+                printTable(table);
                 printf("\nCongratulation %s! You win the round!\n", 
                     players[currentPlayer].name);
-                return 0;
+                return NOT_EXIT;
             }
-
             /* If there is no possible move left */
-            else if(condition == 2){
+            else if(condition == CANT_MOVE) {
                 system("cls");
-                printTables(table);
+                printTable(table);
                 printf("\nThere is no possible move left...\n");
-                return 0;
+                return NOT_EXIT;
             }
-
             /* if the selected block is already choosen */
-            else if(condition == 3) {
+            else if(condition == ILLEGAL) {
                 getch();
                 goto re_choice;
             }
@@ -369,16 +369,16 @@ int startMultiplayer(char table[3][3])
             showHelpScreen();
             /* Why not just let go?
              * Because the loop will make this player
-             * skip his/her turn if he/she the option
+             * skip his/her turn if he/she choose the option
              * to look at help screen.
-             * So I use goto to prevent the loop counter
+             * So that goto is used to prevent the loop counter
              * increments.
              */
             goto re_choice;
         } 
 
         else // EXIT THE GAME
-            return 1;         
+            return EXIT;         
     }
 }
 
@@ -393,9 +393,10 @@ void showStatistics()
 }
 
 
+
 int main()
 {
-    int optionToExecute;
+    int optionToExecute, exit;
     char table[3][3] = {
         {' ', ' ', ' '},
         {' ', ' ', ' '},
@@ -405,24 +406,19 @@ int main()
     show_option:
     system("cls");
     showOption();
-    // Make sure the user enter proper input
-    optionToExecute = takeChoice();
-    while(!optionToExecute)
-    {
-        printf("There is no such option\n");
-        optionToExecute = takeChoice();
-    }
 
-    int exit;
+    /* Make sure the user enter proper input */
+    optionToExecute = getSingleChar() - '0';
+
+    /* run the option */
     switch(optionToExecute)
     {
         case 1:
-            exit = startMultiplayer(table);
-            if(!exit) { 
-                if(askForRestartGame()) {
+            if(startMultiplayer(table) == NOT_EXIT)
+                if(restartGame()) {
+                    clearTable(table);
                     goto show_option;
-                } 
-            }
+                }
             break;
         case 2:
             startVsComputer();
@@ -438,8 +434,12 @@ int main()
             break;
         case 4:
             break;
+        default:
+            printf("There is no such option...\n");
+            getch();
+            goto show_option;
     }
 
-    printf("Exit\n");
+    printf("\nExit\n");
     return 0;
 }
